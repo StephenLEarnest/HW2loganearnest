@@ -1,110 +1,170 @@
-#region imports
-import Gauss_Elim as GE  # this is the module from lecture 2 that has usefule matrix manipulation functions
-from math import sqrt, pi, exp, cos
-#endregion
+import numpy as np
 
-#region function definitions
+
+# Function to perform Simpson's 1/3 rule for numerical integration
+def simpson_integration(func, a, b, n=1000):
+    """ Approximate the integral of func from a to b using Simpson's 1/3 rule with n intervals. """
+    if n % 2 == 1:
+        n += 1  # Simpson's rule requires an even number of intervals
+
+    h = (b - a) / n
+    x = np.linspace(a, b, n + 1)
+    y = func(x)
+
+    # Apply Simpson's rule
+    integral = h / 3 * (y[0] + y[-1] + 4 * np.sum(y[1:-1:2]) + 2 * np.sum(y[2:-2:2]))
+    return integral
+
+
+# Function to calculate the probability using a given PDF
 def Probability(PDF, args, c, GT=True):
     """
-    This is the function to calculate the probability that x is >c or <c depending
-    on the GT boolean.
-    Step 1:  unpack args into mu and stDev
-    Step 2:  compute lhl and rhl for Simpson
-    Step 3:  package new tuple args1=(mu, stDev, lhl, rhl) to be passed to Simpson
-    Step 4:  call Simpson with GNPDF and args1
-    Step 5:  return probability
-    :param PDF: the probability density function to be integrated
-    :param args: a tuple with (mean, standard deviation)
-    :param c: value for which we ask the probability question
-    :param GT: boolean deciding if we want probability x>c (True) or x<c (False)
-    :return: probability value
-    """
-    mu, sig = args
-    p = Simpson(PDF, (mu, sig, mu - 5 * sig, 0))
-    return p
+    Calculate the probability of x being less than or greater than c using Simpson's rule.
 
-def GPDF(args):
-    """
-    Here is where I will define the Gaussian probability density function.
-    This requires knowing the population mean and standard deviation.
-    To compute the GPDF at any value of x, I just need to compute as stated
-    in the homework assignment.
-    Step 1:  unpack the args tuple into variables called: x, mu, stDev
-    Step 2:  compute GPDF value at x
-    Step 3:  return value
-    :param args: (x, mean, standard deviation)  tuple in that order
-    :return: value of GPDF at the desired x
-    """
-    # Step 1: unpack args
-    x, mu, sig = args
-    # step 2: compute GPDF at x
-    fx = (1 / (sig * sqrt(2 * pi))) * exp(-0.5 * ((x - mu) / sig) ** 2)
-    # step 3: return value
-    return fx
+    PDF: The probability density function (Gaussian PDF in this case)
+    args: A tuple containing the mean (mu) and standard deviation (sigma)
+    c: The upper limit for integration
+    GT: If True, return the probability P(x > c); if False, return P(x < c)
 
-def Simpson(fn, args, N=100):
+    Returns: The probability.
     """
-    This executes the Simpson 1/3 rule for numerical integration (see page 832, Table 19.4).
-    As I recall:
-    1. divide the range from x=lhl to x=rhl into an even number of parts. Perhaps 20?
-    2. compute fx at each x value between lhl and rhl
-    3. sum the even and odd values of fx as prescribed
-    4. return the area beneath the function fx
-    :param fx: some function of x to integrate
-    :param args: a tuple containing (mean, stDev, lhl, rhl)
-    :return: the area beneath the function between lhl and rhl
-    """
-    area = 0.5
-    return area
+    mu, sigma = args
 
+    # Define the limits of integration
+    lower_limit = mu - 5 * sigma
+    upper_limit = c if GT else mu + 5 * sigma  # depending on the GT flag
+
+    # Create the function to integrate by passing the PDF, mu, and sigma
+    def integrand(x):
+        return PDF(x, mu, sigma)
+
+    # Use Simpson's rule to integrate
+    probability = simpson_integration(integrand, lower_limit, upper_limit)
+
+    if GT:
+        # If GT=True, probability of x > c is the complement of the probability of x < c
+        total_probability = 1.0 - probability
+    else:
+        # If GT=False, the probability of x < c is just the result of the integration
+        total_probability = probability
+
+    return total_probability
+
+
+# Example of a Gaussian PDF function
+def gaussian_pdf(x, mu, sigma):
+    """ Gaussian PDF function. """
+    return (1 / (sigma * np.sqrt(2 * np.pi))) * np.exp(-0.5 * ((x - mu) / sigma) ** 2)
+
+
+# Secant method to find the root of a function
 def Secant(fcn, x0, x1, maxiter=10, xtol=1e-5):
     """
-    This funciton implements th Secant method to find the root of an equation.  You should write your equation in a form
-    fcn = 0 such that when the correct value of x is selected, the fcn actually equals zero (or very close to it).
-    :param fcn: the function for which we want to find the root
-    :param x0: x value in neighborhood of root (or guess 1)
-    :param x1: another x value in neighborhood of root (or guess x0+1)
-    :param maxiter: exit if the number of iterations (new x values) equals this number
-    :param xtol:  exit if the |xnewest - xprevious| < xtol
-    :return: tuple with: (the final estimate of the root (most recent value of x), number of iterations)
+    Use the Secant Method to find the root of a function fcn(x) in the neighborhood of x0 and x1.
+
+    fcn: Function for which we want to find the root.
+    x0, x1: Initial guesses for the root in the neighborhood of the root.
+    maxiter: Maximum number of iterations (defaults to 10).
+    xtol: Tolerance for convergence (defaults to 1e-5).
+
+    Returns: Final estimate of the root (most recent new x value).
     """
-    pass
 
-def GaussSeidel(Aaug, x, Niter = 15):
+    # Iterate for the Secant Method
+    for i in range(maxiter):
+        # Calculate the function values at x0 and x1
+        f_x0 = fcn(x0)
+        f_x1 = fcn(x1)
+
+        # Compute the next estimate using the Secant formula
+        if f_x1 - f_x0 == 0:
+            print("Division by zero in Secant method; f(x1) - f(x0) is zero.")
+            return None
+
+        # Secant update formula
+        x_new = x1 - f_x1 * (x1 - x0) / (f_x1 - f_x0)
+
+        # Check for convergence based on the xtol criterion
+        if abs(x_new - x1) < xtol:
+            return x_new
+
+        # Prepare for the next iteration
+        x0, x1 = x1, x_new
+
+    # If the method didn't converge within the maxiter, return the most recent estimate
+    print(f"Secant method did not converge within {maxiter} iterations.")
+    return x1
+
+
+# Example function to find its root using the Secant method
+def f(x):
+    return x ** 2 - 4  # f(x) = x^2 - 4, root at x = 2 or x = -2
+
+
+# Gauss-Seidel method to solve the system of linear equations
+def GaussSeidel(Aaug, x, Niter=15):
     """
-    This should implement the Gauss-Seidel method (see page 860, Tabl 20.2) for solving a system of equations.
-    :param Aaug: The augmented matrix from Ax=b -> [A|b]
-    :param x:  An initial guess for the x vector. if A is nxn, x is nx1
-    :param Niter:  Number of iterations to run the GS method
-    :return: the solution vector x
+    Use the Gauss-Seidel method to solve the system of linear equations Ax = b.
+
+    Aaug: Augmented matrix containing the coefficient matrix A and the right-hand side vector b.
+          It is a 2D numpy array with shape (N, N+1), where N is the number of equations.
+    x: Initial guess vector (1D numpy array of length N).
+    Niter: Number of iterations to perform (default is 15).
+
+    Returns: The final estimate of the solution vector x after Niter iterations.
     """
-    Aaug = GE.MakeDiagDom(Aaug)
-    pass
+    # Extract the number of equations (N) from the shape of Aaug
+    N = Aaug.shape[0]
 
-def main():
-    '''
-    This is a function I created for testing the numerical methods locally.
-    :return: None
-    '''
-    #region testing GPDF
-    fx = GPDF((0,0,1))
-    print("{:0.5f}".format(fx))  # Does this match the expected value?
-    #edregion
+    # Perform the Gauss-Seidel iterations
+    for k in range(Niter):
+        for i in range(N):
+            # Get the current row, excluding the last column (b)
+            row = Aaug[i, :-1]
 
-    #region testing Simpson
-    p=Simpson(GPDF,(0,1,-5,0)) # should return 0.5
-    print("p={:0.5f}".format(p))  # Does this match the expected value?
-    #endregion
+            # Get the value of b from the augmented matrix
+            b = Aaug[i, -1]
 
-    #region testing Probability
-    p1 = Probability(GPDF, (0,1),0,True)
-    print("p1={:0.5f}".format(p1))  # Does this match the expected value?
-    #endregion
-    pass
+            # Compute the sum of the known values in the current row
+            sum1 = np.dot(row[:i], x[:i])  # Sum over x1 to x(i-1)
+            sum2 = np.dot(row[i + 1:], x[i + 1:])  # Sum over x(i+1) to xN
 
-#endregion
+            # Update the value of x[i]
+            x[i] = (b - sum1 - sum2) / Aaug[i, i]
 
-#region function calls
-if __name__ == '__main__':
-    main()
-#endregion
+        # Optional: Print the solution after each iteration (for debugging/understanding)
+        # print(f"Iteration {k+1}: {x}")
+
+    return x
+
+
+# Example usage of Gauss-Seidel method
+if __name__ == "__main__":
+    # Example for the Probability function
+    mu_1, sigma_1 = 100, 12.5
+    c_1 = 105
+    prob_x_lt_105 = Probability(gaussian_pdf, (mu_1, sigma_1), c_1, GT=False)
+    print(f"P(x<105|N(100,12.5))={prob_x_lt_105:.2f}")
+
+    mu_2, sigma_2 = 100, 3
+    c_2 = mu_2 + 2 * sigma_2  # c = mu + 2*sigma
+    prob_x_gt_mu_plus_2sigma = Probability(gaussian_pdf, (mu_2, sigma_2), c_2, GT=True)
+    print(f"P(x>{mu_2 + 2 * sigma_2}|N(100,3))={prob_x_gt_mu_plus_2sigma:.2f}")
+
+    # Example usage of Secant method
+    root1 = Secant(f, 1, 2, maxiter=5, xtol=1e-4)
+    print(f"Root found with x0=1, x1=2, maxiter=5, xtol=1e-4: {root1}")
+
+    root2 = Secant(f, 1, 2, maxiter=15, xtol=1e-8)
+    print(f"Root found with x0=1, x1=2, maxiter=15, xtol=1e-8: {root2}")
+
+    root3 = Secant(f, 1, 2, maxiter=3, xtol=1e-8)
+    print(f"Root found with x0=1, x1=2, maxiter=3, xtol=1e-8: {root3}")
+
+    # Example usage of Gauss-Seidel method
+    Aaug = np.array([[4, -1, 0, 3],
+                     [-1, 4, -1, 1],
+                     [0, -1, 4, 2]], dtype=float)
+    x_init = np.zeros(Aaug.shape[0])
+    solution = GaussSeidel(Aaug, x_init, Niter=15)
+    print("Solution:", solution)

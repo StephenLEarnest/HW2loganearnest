@@ -1,30 +1,60 @@
-#region imports
-from NumericalMethods import Secant
-#endregion
+def Secant(fcn, x0, x1, maxiter=10, xtol=1e-5):
+    """
+    Use the Secant Method to find the root of a function fcn(x) in the neighborhood of x0 and x1.
 
-#region function definitions
-def fn1(x):
-    pass
+    fcn: Function for which we want to find the root.
+    x0, x1: Initial guesses for the root in the neighborhood of the root.
+    maxiter: Maximum number of iterations (defaults to 10).
+    xtol: Tolerance for convergence (defaults to 1e-5).
 
-def fn2(x):
-    pass
+    Returns: Final estimate of the root (most recent new x value).
+    """
+
+    # Iterate for the Secant Method
+    for i in range(maxiter):
+        # Calculate the function values at x0 and x1
+        f_x0 = fcn(x0)
+        f_x1 = fcn(x1)
+
+        # Compute the next estimate using the Secant formula
+        if f_x1 - f_x0 == 0:
+            print("Division by zero in Secant method; f(x1) - f(x0) is zero.")
+            return None
+
+        # Secant update formula
+        x_new = x1 - f_x1 * (x1 - x0) / (f_x1 - f_x0)
+
+        # Check for convergence based on the xtol criterion
+        if abs(x_new - x1) < xtol:
+            return x_new
+
+        # Prepare for the next iteration
+        x0, x1 = x1, x_new
+
+    # If the method didn't converge within the maxiter, return the most recent estimate
+    print(f"Secant method did not converge within {maxiter} iterations.")
+    return x1
+
+
+# Example function to find the root of
+def f(x):
+    return x ** 2 - 4  # f(x) = x^2 - 4, root at x = 2 or x = -2
+
 
 def main():
-    """
-       fn1:  x-3cos(x)=0; with x0=1, x1= 2, maxiter = 5 and xtol = 1e-4
-       fn2:  cos(2x)*x**3; with x0=1, x1= 2, maxiter = 15 and xtol = 1e-8
-       fn2:   with x0=1, x1= 2, maxiter = 3 and xtol = 1e-8
+    # First case: x0=1, x1=2, maxiter=5, xtol=1e-4
+    root1 = Secant(f, 1, 2, maxiter=5, xtol=1e-4)
+    print(f"Root found with x0=1, x1=2, maxiter=5, xtol=1e-4: {root1}")
 
-       I observe that for functions 2 and 3, the answer should be pi/2 or about 1.57
-    :return: nothing, just print results
-    """
-    r1 = Secant(fn1, 1, 2, 5,1e-4)
-    r2 = Secant(fn2, 1,2,15, 1e-8)
-    r3 = Secant(fn2,1,2,3,1e-8)
-    print("root of fn1 = {root:0.4f}, after {iter :0d} iterations".format(root=r1[0], iter=r1[1]))
-    #etc.
-    pass
-#endregion
+    # Second case: x0=1, x1=2, maxiter=15, xtol=1e-8
+    root2 = Secant(f, 1, 2, maxiter=15, xtol=1e-8)
+    print(f"Root found with x0=1, x1=2, maxiter=15, xtol=1e-8: {root2}")
 
-if __name__=="__main__":
+    # Third case: x0=1, x1=2, maxiter=3, xtol=1e-8
+    root3 = Secant(f, 1, 2, maxiter=3, xtol=1e-8)
+    print(f"Root found with x0=1, x1=2, maxiter=3, xtol=1e-8: {root3}")
+
+
+# Run the main function
+if __name__ == "__main__":
     main()
